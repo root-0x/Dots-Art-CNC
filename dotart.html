@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dots Art Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0e13;
+  --surface: #17151e;
+  --surface2: #211e2b;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.14);
+  --ink: #e8e4f0;
+  --ink2: #9b94b0;
+  --ink3: #5e5875;
+  --accent: #8b3cf7;
+  --accent-hover: #7025e0;
+  --sidebar-w: 350px;
+  --header-h: 56px;
+  --sans: 'Syne', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: var(--header-h) 1fr;
+  overflow: hidden;
+}
+
+header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-dots {
+  display: grid;
+  grid-template-columns: repeat(3, 7px);
+  gap: 4px;
+}
+
+.logo-dots span {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0.15;
+}
+
+.logo-dots span:nth-child(2),
+.logo-dots span:nth-child(4),
+.logo-dots span:nth-child(6) { opacity: 1; background: var(--accent); }
+
+header h1 {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+header h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 99px;
+}
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+.drop-zone {
+  margin: 1.25rem;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.drop-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.drop-zone:hover, .drop-zone.drag { border-color: var(--accent); border-style: solid; }
+.drop-zone:hover::before, .drop-zone.drag::before { opacity: 0.04; }
+.drop-zone input { display: none; }
+
+.drop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 6px);
+  grid-template-rows: repeat(4, 6px);
+  gap: 3px;
+  width: fit-content;
+  margin: 0 auto 0.875rem;
+  position: relative;
+}
+
+.drop-grid span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.drop-grid span.lit { background: var(--accent); }
+
+.drop-zone p { font-size: 12px; color: var(--ink3); line-height: 1.6; position: relative; }
+.drop-zone p strong { color: var(--ink); font-weight: 600; display: block; margin-bottom: 2px; font-size: 13px; }
+
+.controls {
+  padding: 0 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.625rem;
+}
+
+.section-head span {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  white-space: nowrap;
+}
+
+.section-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.ctrl-group { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.ctrl { display: flex; align-items: center; gap: 0.75rem; }
+
+.ctrl label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink2);
+  white-space: nowrap;
+  min-width: 72px;
+}
+
+.ctrl-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  transition: transform 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+.val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink);
+  min-width: 24px;
+  text-align: right;
+}
+
+input[type=color] {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  background: transparent;
+}
+
+.toggle {
+  display: flex;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+  padding: 2px;
+  gap: 2px;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 5px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--ink3);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+  border-radius: 5px;
+}
+
+.toggle button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.checkbox-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-ctrl input { display: none; }
+
+.checkbox-visual {
+  width: 34px; height: 20px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.checkbox-visual::after {
+  content: '';
+  position: absolute;
+  width: 13px; height: 13px;
+  background: var(--ink3);
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: all 0.2s;
+}
+
+.checkbox-ctrl input:checked + .checkbox-visual { background: var(--accent); border-color: var(--accent); }
+.checkbox-ctrl input:checked + .checkbox-visual::after { left: 16px; background: #fff; }
+.checkbox-ctrl span { font-size: 12px; font-weight: 500; color: var(--ink2); }
+
+.actions {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn {
+  width: 100%;
+  padding: 11px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn:hover { background: var(--surface2); }
+.btn:active { transform: scale(0.98); }
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.canvas-area {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-toolbar {
+  padding: 0 1.5rem;
+  height: 42px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.toolbar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.toolbar-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-strong); }
+
+.info {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+  margin-left: auto;
+}
+
+.canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 2rem;
+  background: var(--bg);
+}
+
+.canvas-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.canvas-wrap::-webkit-scrollbar-track { background: transparent; }
+.canvas-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 1.5rem;
+  user-select: none;
+}
+
+.empty-dots {
+  display: grid;
+  grid-template-columns: repeat(12, 8px);
+  gap: 5px;
+}
+
+.empty-dots span {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.empty-dots span:nth-child(3n+1) { opacity: 0.2; }
+.empty-dots span:nth-child(5n+2) { opacity: 0.8; }
+.empty-dots span:nth-child(7n+3) { background: var(--accent); opacity: 0.3; }
+
+.empty-state p {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.08em;
+}
+
+#braille-output {
+  font-family: 'Noto Sans Symbols 2', 'Courier New', monospace;
+  font-size: 8px;
+  line-height: 1;
+  white-space: pre;
+  color: #4455cc;
+  letter-spacing: 0;
+  word-spacing: 0;
+  display: none;
+}
+
+#canvas-output { display: none; max-width: none; }
+#src-canvas { display: none; }
+
+/* ── Déco : blobs d'ambiance ── */
+.bg-blobs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.bg-blobs::before,
+.bg-blobs::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+  animation: blobDrift 12s ease-in-out infinite alternate;
+}
+.bg-blobs::before {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #8b3cf7, transparent 70%);
+  top: -120px; right: 10%;
+  animation-duration: 14s;
+}
+.bg-blobs::after {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, #5b1fd4, transparent 70%);
+  bottom: -80px; left: 30%;
+  animation-duration: 10s;
+  animation-delay: -4s;
+}
+@keyframes blobDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, 30px) scale(1.08); }
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* ── Déco : soulignement animé sur le titre ── */
+.logo { position: relative; }
+.logo-glow { display: none; }
+
+header h1 {
+  position: relative;
+  display: inline-block;
+}
+
+header h1::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--accent), #c084fc, var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: underlineSlide 2.5s linear infinite;
+  border-radius: 2px;
+}
+
+@keyframes underlineSlide {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Déco : scan line dans le header ── */
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,60,247,0.6), transparent);
+  animation: scanSlide 4s ease-in-out infinite;
+}
+header { position: relative; overflow: hidden; }
+@keyframes scanSlide {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* ── Déco : sidebar gradient top ── */
+.sidebar::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ── Déco : glow sur le bouton primary ── */
+.btn.primary {
+  box-shadow: 0 0 0 0 rgba(139,60,247,0);
+  transition: all 0.2s;
+}
+.btn.primary:hover {
+  box-shadow: 0 0 18px 4px rgba(139,60,247,0.35);
+}
+
+/* ── Déco : empty state amélioré ── */
+.empty-state {
+  position: relative;
+}
+.empty-state::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,60,247,0.07), transparent 70%);
+  pointer-events: none;
+}
+
+.empty-dots {
+  grid-template-columns: repeat(16, 7px);
+  gap: 6px;
+  animation: dotsPulse 3s ease-in-out infinite;
+}
+@keyframes dotsPulse {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+/* ── Déco : corner brackets sur la canvas-area ── */
+.canvas-corner {
+  position: absolute;
+  width: 18px; height: 18px;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.canvas-corner.tl { top: 8px; left: 8px; border-top: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); }
+.canvas-corner.tr { top: 8px; right: 8px; border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); }
+.canvas-corner.bl { bottom: 8px; left: 8px; border-bottom: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); }
+.canvas-corner.br { bottom: 8px; right: 8px; border-bottom: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); }
+.canvas-wrap { position: relative; }
+
+/* ── Déco : dot animé dans la toolbar ── */
+.toolbar-dot {
+  background: var(--accent);
+  opacity: 0.5;
+  animation: toolbarBlink 2s ease-in-out infinite;
+}
+@keyframes toolbarBlink {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.4); }
+}
+
+/* ── Déco : header badge glow ── */
+.header-badge {
+  border-color: rgba(139,60,247,0.4);
+  color: rgba(139,60,247,0.8);
+  background: rgba(139,60,247,0.06);
+}
+
+/* ── Déco : drop-zone shimmer ── */
+.drop-zone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 30%, rgba(139,60,247,0.10) 50%, transparent 70%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  animation: shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  0%   { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-blobs"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-glow"></div>
+    <div class="logo-dots">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <h1>Dots Art <em>Generator</em></h1>
+  </div>
+  <div class="header-right">
+    <span class="header-badge">v1.0</span>
+  </div>
+</header>
+
+<aside class="sidebar">
+
+  <div class="drop-zone" id="drop" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="drop-grid">
+      <span class="lit"></span><span></span><span class="lit"></span><span></span>
+      <span></span><span class="lit"></span><span></span><span class="lit"></span>
+      <span class="lit"></span><span></span><span class="lit"></span><span></span>
+      <span></span><span class="lit"></span><span></span><span class="lit"></span>
+    </div>
+    <p>
+      <strong>Drop une image ici</strong>
+      PNG · JPG · WebP · GIF
+    </p>
+  </div>
+
+  <div class="controls">
+
+    <div>
+      <div class="section-head"><span>Mode</span></div>
+      <div class="toggle">
+        <button class="active" data-mode="braille" onclick="setMode('braille', this)">⣿ Braille</button>
+        <button data-mode="canvas" onclick="setMode('canvas', this)">● Canvas</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group" id="braille-controls">
+      <div class="section-head"><span>Braille</span></div>
+
+      <div class="ctrl">
+        <label>Largeur</label>
+        <div class="ctrl-right">
+          <input type="range" min="20" max="150" value="60" id="bWidth" oninput="update('bWidth','bWidthVal');render()">
+          <span class="val" id="bWidthVal">60</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Taille px</label>
+        <div class="ctrl-right">
+          <input type="range" min="4" max="24" value="8" id="bSize" oninput="update('bSize','bSizeVal');render()">
+          <span class="val" id="bSizeVal">8</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Seuil</label>
+        <div class="ctrl-right">
+          <input type="range" min="30" max="220" value="128" id="bThresh" oninput="update('bThresh','bThreshVal');render()">
+          <span class="val" id="bThreshVal">128</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Couleur</label>
+        <div class="ctrl-right">
+          <input type="color" id="bColor" value="#4455cc" oninput="render()">
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Fond</label>
+        <div class="ctrl-right">
+          <input type="color" id="bBg" value="#08080d" oninput="applyBg()">
+        </div>
+      </div>
+
+      <label class="checkbox-ctrl">
+        <input type="checkbox" id="bInvert" onchange="render()">
+        <div class="checkbox-visual"></div>
+        <span>Inverser</span>
+      </label>
+    </div>
+
+    <div class="ctrl-group" id="canvas-controls" style="display:none">
+      <div class="section-head"><span>Canvas dots</span></div>
+
+      <div class="ctrl">
+        <label>Rayon dot</label>
+        <div class="ctrl-right">
+          <input type="range" min="1" max="10" value="3" id="cRadius" oninput="update('cRadius','cRadiusVal');render()">
+          <span class="val" id="cRadiusVal">3</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Gap</label>
+        <div class="ctrl-right">
+          <input type="range" min="1" max="10" value="2" id="cGap" oninput="update('cGap','cGapVal');render()">
+          <span class="val" id="cGapVal">2</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Seuil</label>
+        <div class="ctrl-right">
+          <input type="range" min="30" max="220" value="128" id="cThresh" oninput="update('cThresh','cThreshVal');render()">
+          <span class="val" id="cThreshVal">128</span>
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Dot ON</label>
+        <div class="ctrl-right">
+          <input type="color" id="cOn" value="#4455cc" oninput="render()">
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Dot OFF</label>
+        <div class="ctrl-right">
+          <input type="color" id="cOff" value="#1a1a3a" oninput="render()">
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Fond</label>
+        <div class="ctrl-right">
+          <input type="color" id="cBg" value="#08080d" oninput="applyBg()">
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <label>Forme</label>
+        <div class="toggle" style="flex:1">
+          <button class="active" data-shape="circle" onclick="setShape('circle',this)">● Rond</button>
+          <button data-shape="square" onclick="setShape('square',this)">■ Carré</button>
+        </div>
+      </div>
+
+      <label class="checkbox-ctrl">
+        <input type="checkbox" id="cInvert" onchange="render()">
+        <div class="checkbox-visual"></div>
+        <span>Inverser</span>
+      </label>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" onclick="exportOutput()">Exporter ↓</button>
+    <button class="btn" onclick="copyText()" id="copyBtn" style="display:none">Copier le texte</button>
+  </div>
+
+</aside>
+
+<main class="canvas-area">
+  <div class="canvas-toolbar">
+    <span class="toolbar-label">Aperçu</span>
+    <div class="toolbar-dot"></div>
+    <span class="info" id="info">aucune image</span>
+  </div>
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="canvas-corner tl"></div>
+    <div class="canvas-corner tr"></div>
+    <div class="canvas-corner bl"></div>
+    <div class="canvas-corner br"></div>
+    <div class="empty-state" id="emptyState">
+      <div class="empty-dots">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <p>drop une image pour commencer</p>
+    </div>
+    <pre id="braille-output"></pre>
+    <canvas id="canvas-output"></canvas>
+  </div>
+</main>
+
+<canvas id="src-canvas"></canvas>
+
+<script>
+let img = null;
+let mode = 'braille';
+let shape = 'circle';
+let lastText = '';
+
+const DOT_BITS = [[0x01,0x08],[0x02,0x10],[0x04,0x20],[0x40,0x80]];
+
+function update(sliderId, valId) {
+  document.getElementById(valId).textContent = document.getElementById(sliderId).value;
+}
+
+function vi(id) { return parseInt(document.getElementById(id).value); }
+function vc(id) { return document.getElementById(id).checked; }
+function vv(id) { return document.getElementById(id).value; }
+
+function setMode(m, btn) {
+  mode = m;
+  document.querySelectorAll('.toggle button[data-mode]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('braille-controls').style.display = m === 'braille' ? 'flex' : 'none';
+  document.getElementById('canvas-controls').style.display = m === 'canvas' ? 'flex' : 'none';
+  document.getElementById('braille-output').style.display = 'none';
+  document.getElementById('canvas-output').style.display = 'none';
+  document.getElementById('copyBtn').style.display = m === 'braille' ? 'block' : 'none';
+  if (img) render();
+}
+
+function setShape(s, btn) {
+  shape = s;
+  document.querySelectorAll('.toggle button[data-shape]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (img) render();
+}
+
+function applyBg() {
+  const bg = mode === 'braille' ? vv('bBg') : vv('cBg');
+  document.getElementById('canvasWrap').style.background = bg;
+}
+
+function getSrcPixels(w, h) {
+  const sc = document.getElementById('src-canvas');
+  sc.width = w; sc.height = h;
+  const ctx = sc.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  return ctx.getImageData(0, 0, w, h).data;
+}
+
+function bright(px, i) {
+  return 0.299 * px[i] + 0.587 * px[i+1] + 0.114 * px[i+2];
+}
+
+function renderBraille() {
+  const cols = vi('bWidth');
+  const th = vi('bThresh');
+  const inv = vc('bInvert');
+  const color = vv('bColor');
+  const size = vi('bSize');
+  const aspect = img.naturalHeight / img.naturalWidth;
+  const rows = Math.round(cols * aspect * (2/4) * 1.0);
+  const srcW = cols * 2, srcH = rows * 4;
+  const px = getSrcPixels(srcW, srcH);
+
+  let out = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      let bits = 0;
+      for (let dy = 0; dy < 4; dy++)
+        for (let dx = 0; dx < 2; dx++) {
+          const i = ((r*4+dy)*srcW + c*2+dx) * 4;
+          const on = inv ? bright(px,i) > th : bright(px,i) < th;
+          if (on) bits |= DOT_BITS[dy][dx];
+        }
+      out += String.fromCodePoint(0x2800 | bits);
+    }
+    out += '\n';
+  }
+
+  lastText = out;
+  const el = document.getElementById('braille-output');
+  el.textContent = out;
+  el.style.display = 'block';
+  el.style.fontSize = size + 'px';
+  el.style.color = color;
+  document.getElementById('canvas-output').style.display = 'none';
+  document.getElementById('canvasWrap').style.background = vv('bBg');
+  document.getElementById('info').textContent = `${cols} × ${rows} chars`;
+}
+
+function renderCanvas() {
+  const r = vi('cRadius');
+  const gap = vi('cGap');
+  const th = vi('cThresh');
+  const inv = vc('cInvert');
+  const onCol = vv('cOn');
+  const offCol = vv('cOff');
+  const step = r * 2 + gap;
+  const maxW = document.getElementById('canvasWrap').clientWidth - 64;
+  const cols = Math.max(10, Math.floor(maxW / step));
+  const aspect = img.naturalHeight / img.naturalWidth;
+  const rows = Math.round(cols * aspect);
+  const px = getSrcPixels(cols, rows);
+
+  const oc = document.getElementById('canvas-output');
+  oc.width = cols * step;
+  oc.height = rows * step;
+  const ctx = oc.getContext('2d');
+  ctx.fillStyle = vv('cBg');
+  ctx.fillRect(0, 0, oc.width, oc.height);
+
+  function hexToRgb(h) {
+    return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  }
+
+  const onRgb = hexToRgb(onCol), offRgb = hexToRgb(offCol);
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const i = (row * cols + col) * 4;
+      const dark = inv ? bright(px,i) > th : bright(px,i) < th;
+      const [dr,dg,db] = dark ? onRgb : offRgb;
+      const cx = col * step + r + gap/2;
+      const cy = row * step + r + gap/2;
+      ctx.fillStyle = `rgb(${dr},${dg},${db})`;
+      ctx.beginPath();
+      if (shape === 'circle') {
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      } else {
+        ctx.rect(cx - r, cy - r, r * 2, r * 2);
+      }
+      ctx.fill();
+    }
+  }
+
+  oc.style.display = 'block';
+  document.getElementById('braille-output').style.display = 'none';
+  document.getElementById('canvasWrap').style.background = vv('cBg');
+  document.getElementById('info').textContent = `${oc.width} × ${oc.height}px`;
+}
+
+function render() {
+  if (!img) return;
+  document.getElementById('emptyState').style.display = 'none';
+  if (mode === 'braille') renderBraille();
+  else renderCanvas();
+}
+
+function exportOutput() {
+  if (!img) return;
+  if (mode === 'braille') {
+    const blob = new Blob([lastText], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.download = 'dotart.txt';
+    a.href = URL.createObjectURL(blob);
+    a.click();
+  } else {
+    const a = document.createElement('a');
+    a.download = 'dotart.png';
+    a.href = document.getElementById('canvas-output').toDataURL('image/png');
+    a.click();
+  }
+}
+
+function copyText() {
+  if (!lastText) return;
+  navigator.clipboard.writeText(lastText).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copié !';
+    setTimeout(() => btn.textContent = 'Copier le texte', 1500);
+  });
+}
+
+function loadImage(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const i = new Image();
+    i.onload = () => { img = i; render(); };
+    i.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) loadImage(e.target.files[0]);
+});
+
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('drag');
+  if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+});
+</script>
+</body>
+</html>
